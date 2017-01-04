@@ -10,7 +10,7 @@ public class StyleData implements Style {
   private final String packageName;
   private final String name;
   private final String parent;
-  private final Map<ResName, AttributeResource> items = new LinkedHashMap<>();
+  private final Map<Integer, AttributeResource> items = new LinkedHashMap<>();
 
   public StyleData(String packageName, String name, String parent) {
     this.packageName = packageName;
@@ -26,31 +26,17 @@ public class StyleData implements Style {
     return parent;
   }
 
-  public void add(ResName attrName, AttributeResource attribute) {
-    attrName.mustBe("attr");
-    items.put(attrName, attribute);
+  public void add(int resId, AttributeResource attribute) {
+    items.put(resId, attribute);
   }
 
-  @Override public AttributeResource getAttrValue(ResName resName) {
-    AttributeResource attributeResource = items.get(resName);
-
-    // This hack allows us to look up attributes from downstream dependencies, see comment in
-    // org.robolectric.shadows.ShadowThemeTest.obtainTypedArrayFromDependencyLibrary()
-    // for an explanation. TODO(jongerrish): Make Robolectric use a more realistic resource merging
-    // scheme.
-    if (attributeResource == null && !"android".equals(resName.packageName) && !"android".equals(packageName)) {
-      attributeResource = items.get(resName.withPackageName(packageName));
-      if (attributeResource != null && (!"android".equals(attributeResource.contextPackageName))) {
-        attributeResource = new AttributeResource(resName, attributeResource.value, resName.packageName);
-      }
-    }
-
-    return attributeResource;
+  @Override public AttributeResource getAttrValue(int resId) {
+    return items.get(resId);
   }
 
   public boolean grep(Pattern pattern) {
-    for (ResName resName : items.keySet()) {
-      if (pattern.matcher(resName.getFullyQualifiedName()).find()) {
+    for (AttributeResource attributeResource : items.values()) {
+      if (pattern.matcher(attributeResource.resName.getFullyQualifiedName()).find()) {
         return true;
       }
     }

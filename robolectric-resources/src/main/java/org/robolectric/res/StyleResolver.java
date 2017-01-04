@@ -7,25 +7,23 @@ import java.util.List;
 
 public class StyleResolver implements Style {
   private final List<StyleData> styles = new ArrayList<>();
-  private final ResourceTable appResourceTable;
-  private final ResourceTable systemResourceTable;
+  private final ResourceTable resourceTable;
   private final Style theme;
   private final ResName myResName;
   private final String qualifiers;
 
-  public StyleResolver(ResourceTable appResourceTable, ResourceTable systemResourceTable, StyleData styleData,
+  public StyleResolver(ResourceTable resourceTable, StyleData styleData,
                        Style theme, ResName myResName, String qualifiers) {
-    this.appResourceTable = appResourceTable;
-    this.systemResourceTable = systemResourceTable;
+    this.resourceTable = resourceTable;
     this.theme = theme;
     this.myResName = myResName;
     this.qualifiers = qualifiers;
     styles.add(styleData);
   }
 
-  @Override public AttributeResource getAttrValue(ResName resName) {
+  @Override public AttributeResource getAttrValue(int resId) {
     for (StyleData style : styles) {
-      AttributeResource value = style.getAttrValue(resName);
+      AttributeResource value = style.getAttrValue(resId);
       if (value != null) return value;
     }
     int initialSize = styles.size();
@@ -39,13 +37,13 @@ public class StyleResolver implements Style {
     }
     for (int i = initialSize; i < styles.size(); i++) {
       StyleData style = styles.get(i);
-      AttributeResource value = style.getAttrValue(resName);
+      AttributeResource value = style.getAttrValue(resId);
       if (value != null) return value;
     }
 
     // todo: is this tested?
     if (theme != null) {
-      AttributeResource value = theme.getAttrValue(resName);
+      AttributeResource value = theme.getAttrValue(resId);
       if (value != null) return value;
     }
 
@@ -87,9 +85,7 @@ public class StyleResolver implements Style {
 
     styleRef = dereferenceResName(styleRef);
 
-    // TODO: Refactor this to a ResourceLoaderChooser
-    ResourceTable resourceProvider = "android".equals(styleRef.packageName) ? systemResourceTable : appResourceTable;
-    TypedResource typedResource = resourceProvider.getValue(styleRef, qualifiers);
+    TypedResource typedResource = resourceTable.getValue(styleRef, qualifiers);
 
     if (typedResource == null) {
       StringBuilder builder = new StringBuilder("Could not find any resource")
@@ -118,7 +114,8 @@ public class StyleResolver implements Style {
     while ("attr".equals(styleRef.type) && dereferencing) {
       dereferencing = false;
       for (StyleData parentStyle : styles) {
-        AttributeResource value = parentStyle.getAttrValue(styleRef);
+        Integer styleResId = resourceTable.getResourceId(styleRef);
+        AttributeResource value = parentStyle.getAttrValue(styleResId);
         if (value != null) {
           styleRef = dereferenceAttr(value);
           dereferencing = true;
@@ -126,7 +123,8 @@ public class StyleResolver implements Style {
         }
       }
       if (!dereferencing && theme != null) {
-        AttributeResource value = theme.getAttrValue(styleRef);
+        Integer styleResId = resourceTable.getResourceId(styleRef);
+        AttributeResource value = theme.getAttrValue(styleResId);
         if (value != null) {
           styleRef = dereferenceAttr(value);
           dereferencing = true;

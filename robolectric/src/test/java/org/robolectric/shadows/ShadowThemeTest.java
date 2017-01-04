@@ -39,8 +39,8 @@ public class ShadowThemeTest {
   }
 
   @Test public void whenExplicitlySetOnActivity_afterSetContentView_activityGetsThemeFromActivityInManifest() throws Exception {
+    RuntimeEnvironment.application.setTheme(R.style.Theme_Robolectric);
     TestActivity activity = buildActivity(TestActivityWithAnotherTheme.class).create().get();
-    activity.setTheme(R.style.Theme_Robolectric);
     Button theButton = (Button) activity.findViewById(R.id.button);
     ColorDrawable background = (ColorDrawable) theButton.getBackground();
     assertThat(background.getColor()).isEqualTo(0xffff0000);

@@ -22,8 +22,8 @@ public class ThemeStyleSetTest {
         createAttribute("string2", "string2 value from style1")
     ), false);
     themeStyleSet.apply(createStyle("style2", createAttribute("string2", "string2 value from style2")), false);
-    assertThat(themeStyleSet.getAttrValue(attrName("string1")).value).isEqualTo("string1 value from style1");
-    assertThat(themeStyleSet.getAttrValue(attrName("string2")).value).isEqualTo("string2 value from style1");
+    assertThat(themeStyleSet.getAttrValue(1).value).isEqualTo("string1 value from style1");
+    assertThat(themeStyleSet.getAttrValue(2).value).isEqualTo("string2 value from style1");
   }
 
   @Test
@@ -33,14 +33,15 @@ public class ThemeStyleSetTest {
         createAttribute("string2", "string2 value from style1")
     ), false);
     themeStyleSet.apply(createStyle("style2", createAttribute("string1", "string1 value from style2")), true);
-    assertThat(themeStyleSet.getAttrValue(attrName("string1")).value).isEqualTo("string1 value from style2");
-    assertThat(themeStyleSet.getAttrValue(attrName("string2")).value).isEqualTo("string2 value from style1");
+    assertThat(themeStyleSet.getAttrValue(1).value).isEqualTo("string1 value from style2");
+    assertThat(themeStyleSet.getAttrValue(2).value).isEqualTo("string2 value from style1");
   }
 
   private StyleData createStyle(String styleName, AttributeResource... attributeResources) {
     StyleData styleData = new StyleData("package", styleName, null);
-    for (AttributeResource attributeResource : attributeResources) {
-      styleData.add(attributeResource.resName, attributeResource);
+    for (int i = 0, attributeResourcesLength = attributeResources.length; i < attributeResourcesLength; i++) {
+      AttributeResource attributeResource = attributeResources[i];
+      styleData.add(i + 1, attributeResource);
     }
     return styleData;
   }
