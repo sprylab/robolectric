@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static java.lang.invoke.MethodType.methodType;
 import static org.objectweb.asm.Type.ARRAY;
@@ -91,7 +92,7 @@ public class InstrumentingClassLoader extends ClassLoader implements Opcodes {
 
   private final URLClassLoader urls;
   private final InstrumentationConfiguration config;
-  private final Map<String, Class> classes = new HashMap<>();
+  private final Map<String, Class> classes = new ConcurrentHashMap<>();
   private final Map<String, String> classesToRemap;
   private final Set<MethodRef> methodsToIntercept;
 
@@ -107,29 +108,34 @@ public class InstrumentingClassLoader extends ClassLoader implements Opcodes {
   }
 
   @Override
-  synchronized public Class loadClass(String name) throws ClassNotFoundException {
-    Class<?> theClass = classes.get(name);
-    if (theClass != null) {
-      if (theClass == MissingClassMarker.class) {
-        throw new ClassNotFoundException(name);
-      } else {
-        return theClass;
+  public Class loadClass(String name, boolean resolve) throws ClassNotFoundException {
+    synchronized (getClassLoadingLock(name)) {
+      Class<?> theClass = classes.get(name);
+      if (theClass != null) {
+        if (theClass == MissingClassMarker.class) {
+          throw new ClassNotFoundException(name);
+        } else {
+          return theClass;
+        }
       }
-    }
 
-    try {
-      if (config.shouldAcquire(name)) {
-        theClass = findClass(name);
-      } else {
-        theClass = getParent().loadClass(name);
+      try {
+        if (config.shouldAcquire(name)) {
+          theClass = findClass(name);
+          if (resolve) {
+            resolveClass(theClass);
+          }
+        } else {
+          theClass = Class.forName(name, resolve, getParent());
+        }
+      } catch (ClassNotFoundException e) {
+        classes.put(name, MissingClassMarker.class);
+        throw e;
       }
-    } catch (ClassNotFoundException e) {
-      classes.put(name, MissingClassMarker.class);
-      throw e;
-    }
 
-    classes.put(name, theClass);
-    return theClass;
+      classes.put(name, theClass);
+      return theClass;
+    }
   }
 
   @Override
