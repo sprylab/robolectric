@@ -31,7 +31,7 @@ public class StyleResourceLoader extends XpathResourceXmlLoader {
       styleData.add(resId, new AttributeResource(attrResName, value, xmlContext.getPackageName()));
     }
 
-    resourceTable.addValue("style", styleNameWithUnderscores, new TypedResource<>(styleData, ResType.STYLE, xmlContext));
+    resourceTable.addResource("style", styleNameWithUnderscores, new TypedResource<>(styleData, ResType.STYLE, xmlContext));
   }
 
   private String underscorize(String s) {
