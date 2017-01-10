@@ -139,6 +139,7 @@ public class InstrumentationConfiguration {
           "org.specs2",  // allows for android projects with mixed scala\java tests to be
           "scala.",      //  run with Maven Surefire (see the RoboSpecs project on github)
           "kotlin.",
+          "org.powermock.",
           "com.almworks.sqlite4java" // Fix #958: SQLite native library must be loaded once.
       ));
       classNameTranslations.put("java.net.ExtendedResponseCache", RoboExtendedResponseCache.class.getName());
